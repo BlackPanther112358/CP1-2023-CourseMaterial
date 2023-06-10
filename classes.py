@@ -3,7 +3,7 @@ from typing import List, Optional
 
 DB_NAME:str = "cp1-2023"
 STUDENT_COLLECTION:str = "students"
-PROBLEM_COLLECTION:str = "problems"
+PROBLEM_COLLECTION:str = "practice"
 PROBLEM_CAP:int = 50
 DIV2_COLLECTION:str = "div2"
 DIV2_CAP:int = 3000
