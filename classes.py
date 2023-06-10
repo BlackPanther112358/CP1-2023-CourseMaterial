@@ -22,7 +22,7 @@ class Student:
         return f"{self.name} ({self.roll})"
 
     def __repr__(self):
-        return f"Student(name={self.name}, roll={self.roll}, email={self.email}, cf_id={self.cf_id})"
+        return f"Student(roll={self.roll}, name={self.name}, email={self.email}, cf_id={self.cf_id})"
 
     def to_dict(self):
         return {
@@ -31,4 +31,3 @@ class Student:
             "email": self.email,
             "cf_id": self.cf_id
         }
-
