@@ -12,10 +12,11 @@ DIV3_CAP:int = 10
 
 class Student:
 
-    def __init__(self, name:str, roll:str, email:str, cf_id:str=None):
+    def __init__(self, name:str, roll:str, email:str, srl_no:int, cf_id:str=None):
         self.name = name
         self.roll = roll
         self.email = email
+        self.srl_no = srl_no
         self.cf_id = cf_id
 
     def __str__(self):
@@ -29,5 +30,6 @@ class Student:
             "name": self.name,
             "roll": self.roll,
             "email": self.email,
-            "cf_id": self.cf_id
+            "cf_id": self.cf_id,
+            "sno" : self.srl_no,
         }

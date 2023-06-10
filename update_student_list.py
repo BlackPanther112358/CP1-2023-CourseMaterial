@@ -44,11 +44,14 @@ def get_student_list() -> list[Student]:
     ids:dict[str, str] = {}
     for row in cf_ids.itertuples():
         ids[row[4]] = row[5]
+    cnt:int = 0
     for row in students.itertuples():
+        cnt += 1
         student_list.append(Student(
             name=row[2],
             roll=row[1],
             email=row[3],
+            srl_no=cnt,
             cf_id=ids.get(row[1], None)
         ))
     logging.info(msg=f"Student list created with {len(student_list)} students")
