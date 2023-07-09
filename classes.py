@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List, Optional
+import gspread
 
 DB_NAME:str = "cp1-2023"
 STUDENT_COLLECTION:str = "students"
@@ -9,6 +10,13 @@ DIV2_COLLECTION:str = "div2"
 DIV2_CAP:int = 3000
 DIV3_COLLECTION:str = "div3"
 DIV3_CAP:int = 10
+
+SHEET_ID:str = "1SHPTPYRx3ZDkgolJw7zGr6TLB41bb4jZDp23TZDq-lw"
+SHEET_NAME_TO_ID:dict[str, int] = {
+    "practice": 0,
+    "div2": 1,
+    "div3": 2,
+}
 
 class Student:
 
@@ -33,3 +41,27 @@ class Student:
             "cf_id": self.cf_id,
             "sno" : self.srl_no,
         }
+    
+class GoogleSheetConnector:
+    """Class to connect to the Google sheet"""
+
+    def __init__(self, sheet_name:str) -> None:
+        google_account = gspread.service_account()
+        self.sheet = google_account.open_by_key(SHEET_ID)
+        self.worksheet = self.sheet.get_worksheet(SHEET_NAME_TO_ID[sheet_name])
+
+    def get_worksheet(self) -> gspread.Worksheet:
+        """Returns the worksheet"""
+        return self.worksheet
+    
+    def get_sheet(self) -> gspread.Spreadsheet:
+        """Returns the sheet"""
+        return self.sheet
+    
+    def get_cell_value(self, row:int, col:int) -> str:
+        """Returns the value of the cell"""
+        return self.worksheet.cell(row, col).value
+    
+    def update_cell_value(self, row:int, col:int, value:str) -> None:
+        """Updates the value of the cell"""
+        self.worksheet.update_cell(row, col, value)
