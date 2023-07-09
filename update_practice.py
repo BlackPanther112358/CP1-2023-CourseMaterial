@@ -3,6 +3,7 @@ from collections import defaultdict
 import requests
 import pymongo
 import logging as log
+import time
 
 log.basicConfig(filename="update_practice.log", filemode="w", level=log.DEBUG)
 logging = log.getLogger(__name__)
@@ -58,6 +59,9 @@ def get_practice_info(cf_id:str) -> dict[int, int]:
     """Returns the practice info for a student"""
     try:
         data = requests.get(f"https://codeforces.com/api/user.status?handle={cf_id}&from=1").json()
+        if data["status"] == "FAILED":
+            logging.error(msg=f"Error while fetching practice info for {cf_id}: {data['comment']}")
+            return defaultdict(int)
         if data["status"] != "OK":
             logging.error(msg=f"Error while fetching practice info for {cf_id}: {data['data']}")
             raise Exception(f"Error while fetching practice info for {cf_id}")
@@ -110,6 +114,7 @@ def main():
         raise
     student_list:list[Student] = get_student_info()
     for student in student_list:
+        time.sleep(1)
         logging.info(msg=f"Updating practice info for {student}")
         practice_info:dict[int, int] = get_practice_info(student.cf_id)
         stud_prac = Practice(roll=student.roll, prac_info=practice_info)
