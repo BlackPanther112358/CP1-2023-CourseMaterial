@@ -10,8 +10,29 @@ logging = log.getLogger(__name__)
 client = None
 db = None
 students = None
+practice_collection = None
 
 START_TIME_STAMP = 1685298600 # Time stamp for May 29 2023 00:00:00
+
+class Practice:
+    """Class to store practice info for a student"""
+
+    def __init__(self, roll:int, prac_info:dict[int:int]) -> None:
+        self.roll = roll
+        self.prac_info = prac_info
+
+    def __str__(self) -> str:
+        return f"Practice info for {self.roll}"
+    
+    def __repr__(self) -> str:
+        return f"Practice(roll={self.roll}, prac_info={self.prac_info})"
+    
+    def to_dict(self) -> dict:
+        dict_val:dict = {}
+        dict_val["roll"] = self.roll
+        for key, val in self.prac_info.items():
+            dict_val[str(key)] = val
+        return dict_val
 
 def get_problem_score(prob_rating:int) -> int:
     """Returns the score for a problem based on its rating"""
@@ -61,16 +82,29 @@ def get_practice_info(cf_id:str) -> dict[int, int]:
     return practice_info
 
 
-def update_info(roll:str, info:dict[int, int]):
+def update_info(stud_prac:Practice):
     """Updates the practice info for a student"""
+    logging.info(msg=f"Updating practice info for {stud_prac.roll}")
+    try:
+        practice_collection.update_one(
+            {"roll": stud_prac.roll},
+            {"$set": stud_prac.to_dict()},
+            upsert=True
+        )
+    except Exception as e:
+        logging.error(msg=f"Error while updating practice info for {stud_prac.roll}: {e}")
+        raise
+
+    # Add code for updating the excel sheet
 
 def main():
     """Update the practice info for all students"""
     try:
-        global client, db, students
+        global client, db, students, practice_collection
         client = pymongo.MongoClient()
         db = client[DB_NAME]
         students = db[STUDENT_COLLECTION]
+        practice_collection = db[PROBLEM_COLLECTION]
     except Exception as e:
         logging.error(msg=f"Error while connecting to MongoDB: {e}")
         raise
@@ -78,7 +112,8 @@ def main():
     for student in student_list:
         logging.info(msg=f"Updating practice info for {student}")
         practice_info:dict[int, int] = get_practice_info(student.cf_id)
-        update_info(student.roll, practice_info)
+        stud_prac = Practice(roll=student.roll, prac_info=practice_info)
+        update_info(stud_prac)
 
 if __name__ == "__main__":
     logging.info(msg="Starting update_practice.py")
