@@ -42,6 +42,27 @@ class Student:
             "sno" : self.srl_no,
         }
     
+class Contest:
+
+    def __init__(self, contest_id:int, srl_no:int, scores:dict[int:int])->None:
+        self.contest_id = contest_id
+        self.srl_no = srl_no
+        self.scores = scores
+    
+    def __str__(self):
+        return f"Contest {self.contest_id} for {self.srl_no}"
+    
+    def __repr__(self):
+        return f"Contest(contest_id={self.contest_id}, srl_no={self.srl_no}, scores={self.scores})"
+    
+    def to_dict(self):
+        dict_val:dict = {}
+        dict_val["contest_id"] = self.contest_id
+        dict_val["srl_no"] = self.srl_no
+        for key, val in self.scores.items():
+            dict_val[str(key)] = val
+        return dict_val
+    
 class GoogleSheetConnector:
     """Class to connect to the Google sheet"""
 
