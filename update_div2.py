@@ -1,6 +1,7 @@
-from classes import Student, GoogleSheetConnector, DB_NAME, STUDENT_COLLECTION, DIV2_COLLECTION, DIV2_CAP
+from classes import Student, Contest, GoogleSheetConnector, DB_NAME, STUDENT_COLLECTION, DIV2_COLLECTION, DIV2_CAP
 import pymongo
 import requests
+from collections import defaultdict
 import logging as log
 import time
 
@@ -32,6 +33,31 @@ def get_student_info() -> list[Student]:
     logging.debug(msg=f"Student list: {student_list}")
     return student_list
 
+def compute_contest_score(cf_id:str, contest_id:int) -> int:
+    """Returns the score of a student for a contest"""
+    try:
+        data = requests.get(f"https://codeforces.com/api/contest.status?contestId={contest_id}&handle={cf_id}&from=1").json()
+        if data["status"] == "FAILED":
+            logging.error(msg=f"Error while fetching details for {cf_id}")
+            return -1
+        if data["status"] != "OK":
+            logging.error(msg=f"Error while fetching details for {cf_id}: {data['comment']}")
+            return -1
+        if data["result"] == []:
+            return 0
+    except Exception as e:
+        logging.error(msg=f"Error while fetching details for {cf_id}: {e}")
+        return -1
+    solved_problems:dict[str: int] = defaultdict(int)
+    for submission in data["result"]:
+        if submission["author"]["participantType"] != "CONTESTANT":
+            continue
+        if submission["verdict"] == "OK":
+            solved_problems[submission["problem"]["index"]] += submission["problem"]["points"]
+        else:
+            solved_problems[submission["problem"]["index"]] -= 50
+    return sum([max(0, solved_problems[problem]) for problem in solved_problems])
+
 def main()->None:
     """Update the score for all the students for the contest or intialize the sheet"""
     try:
@@ -58,7 +84,28 @@ def main()->None:
             sheet_connector.update_cell(SHEET_ROW_OFFSET + student.srl_no, 1, student.name)
             sheet_connector.update_cell(SHEET_ROW_OFFSET + student.srl_no, 2, student.cf_id)
     elif mode == 2:
-        pass
+        contest_id:int = int(input("Enter the contest id: "))
+        logging.info(msg=f"Fetching details for contest {contest_id}")
+        contest_srl_no:int = 1 + div2_collection.count_documents({})
+        sheet_connector.update_cell(2, SHEET_COL_OFFSET + contest_srl_no, contest_id)
+        contest_scores:dict[int, int] = {}
+        for student in student_list:
+            time.sleep(2)
+            logging.info(msg=f"Fetching details info for {student}")
+            contest_score:int = compute_contest_score(student.cf_id, contest_id)
+            if(contest_score == -1):
+                logging.error(msg=f"Error while fetching details for {student}")
+                continue
+            if contest_score == 0:
+                continue
+            sheet_connector.update_cell(SHEET_ROW_OFFSET + student.srl_no, SHEET_COL_OFFSET + contest_srl_no, contest_score)
+            contest_scores[student.roll] = contest_score
+        contest = Contest(contest_id=contest_id, srl_no=contest_srl_no, scores=contest_scores)
+        div2_collection.update_one(
+            {"contest_id": contest_id},
+            {"$set": contest.to_dict()},
+            upsert=True
+        )
     else:
         logging.error(msg=f"Invalid mode {mode}")
         raise ValueError(f"Invalid mode {mode}")
