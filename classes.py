@@ -58,10 +58,10 @@ class GoogleSheetConnector:
         """Returns the sheet"""
         return self.sheet
     
-    def get_cell_value(self, row:int, col:int) -> str:
+    def get_cell(self, row:int, col:int) -> str:
         """Returns the value of the cell"""
         return self.worksheet.cell(row, col).value
     
-    def update_cell_value(self, row:int, col:int, value:str) -> None:
+    def update_cell(self, row:int, col:int, value) -> None:
         """Updates the value of the cell"""
         self.worksheet.update_cell(row, col, value)

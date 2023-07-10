@@ -1,4 +1,4 @@
-from classes import Student, DB_NAME, STUDENT_COLLECTION, PROBLEM_COLLECTION, PROBLEM_CAP
+from classes import Student, GoogleSheetConnector, DB_NAME, STUDENT_COLLECTION, PROBLEM_COLLECTION, PROBLEM_CAP
 from collections import defaultdict
 import requests
 import pymongo
@@ -12,6 +12,10 @@ client = None
 db = None
 students = None
 practice_collection = None
+sheet_connector = None
+
+SHEET_ROW_OFFSET:int = 2
+SHEET_COL_OFFSET:int = 3
 
 START_TIME_STAMP = 1685298600 # Time stamp for May 29 2023 00:00:00
 
@@ -99,7 +103,19 @@ def update_info(stud_prac:Practice):
         logging.error(msg=f"Error while updating practice info for {stud_prac.roll}: {e}")
         raise
 
-    # Add code for updating the excel sheet
+    stud_roll = stud_prac.roll
+    stud_info = students.find_one({"roll": stud_roll})
+    if stud_info is None:
+        logging.error(msg=f"Student {stud_roll} not found in database")
+        return
+    sheet_connector.update_cell(SHEET_ROW_OFFSET + stud_info["sno"], 1, stud_info["name"])
+    sheet_connector.update_cell(SHEET_ROW_OFFSET + stud_info["sno"], 2, stud_info["cf_id"])
+    score:int = 0
+    for key, val in stud_prac.prac_info.items():
+        time.sleep(1)
+        sheet_connector.update_cell(SHEET_ROW_OFFSET + stud_info["sno"], SHEET_COL_OFFSET + key + 1, val)
+        score += val * key
+    sheet_connector.update_cell(SHEET_ROW_OFFSET + stud_info["sno"], 3, min(score, PROBLEM_CAP))
 
 def main():
     """Update the practice info for all students"""
@@ -112,9 +128,15 @@ def main():
     except Exception as e:
         logging.error(msg=f"Error while connecting to MongoDB: {e}")
         raise
+    try:
+        global sheet_connector
+        sheet_connector = GoogleSheetConnector("practice")
+    except Exception as e:
+        logging.error(msg=f"Error while connecting to Google Sheet: {e}")
+        raise
     student_list:list[Student] = get_student_info()
     for student in student_list:
-        time.sleep(1)
+        time.sleep(5)
         logging.info(msg=f"Updating practice info for {student}")
         practice_info:dict[int, int] = get_practice_info(student.cf_id)
         stud_prac = Practice(roll=student.roll, prac_info=practice_info)
