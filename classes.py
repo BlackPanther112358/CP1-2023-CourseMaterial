@@ -10,12 +10,27 @@ DIV2_COLLECTION:str = "div2"
 DIV2_CAP:int = 3000
 DIV3_COLLECTION:str = "div3"
 DIV3_CAP:int = 10
+LAB_COLLECTION:str = "labs"
 
 SHEET_ID:str = "1SHPTPYRx3ZDkgolJw7zGr6TLB41bb4jZDp23TZDq-lw"
 SHEET_NAME_TO_ID:dict[str, int] = {
     "practice": 0,
     "div2": 1,
     "div3": 2,
+    "labs": 3,
+}
+
+GROUP_ID:str = "uc4hHQ2lbv"
+LAB_IDS:dict[str, dict[str, str]] = {
+    '1': { "main":"447928", "upsolve":"447930" },
+    '2': { "main":"450117", "upsolve":"450118" },
+    '3': { "main":"452783", "upsolve":"452785" },
+}
+
+UPSOLVE_RATIO:dict[int, float] = {
+    '1': 0.6,
+    '2': 0.4,
+    '3': 0.4,
 }
 
 class Student:
@@ -61,6 +76,52 @@ class Contest:
         dict_val["srl_no"] = self.srl_no
         for key, val in self.scores.items():
             dict_val[str(key)] = val
+        return dict_val
+    
+class Lab_performance:
+
+    def __init__(self, student_roll:str)->None:
+        self.student_roll = student_roll
+        self.scores = {
+            '1': {'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0},
+            '2': {'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0},
+            '3': {'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0},
+        }
+        self.tot_score = {
+            '1': 0,
+            '2': 0,
+            '3': 0,
+        }
+        self.final_score = 0
+
+    def solved(self, lab_num:int, problem:str)->None:
+        self.scores[lab_num][problem] = 1
+
+    def upsolved(self, lab_num:int, problem:str)->None:
+        if(self.scores[lab_num][problem] == 0):
+            self.scores[lab_num][problem] = UPSOLVE_RATIO[lab_num]
+
+    def get_score(self)->float:
+        for lab_num in ['1', '2', '3']:
+            self.tot_score[lab_num] = sum(self.scores[lab_num].values())*(15/6)
+        return self.tot_score
+    
+    def get_final_score(self)->float:
+        self.final_score = sum(self.tot_score.values()) - min(self.tot_score.values())
+        return self.final_score
+    
+    def __str__(self):
+        return f"Lab for {self.student_roll}"
+    
+    def __repr__(self):
+        return f"Lab_performance(student_roll={self.student_roll}, scores={self.scores}, tot_score={self.tot_score}), final_score={self.final_score})"
+    
+    def to_dict(self):
+        dict_val:dict = {}
+        dict_val["student_roll"] = self.student_roll
+        dict_val["scores"] = self.scores
+        dict_val["tot_score"] = self.tot_score
+        dict_val["final_score"] = self.final_score
         return dict_val
     
 class GoogleSheetConnector:
