@@ -1,6 +1,9 @@
 from enum import Enum
 from typing import List, Optional
 import gspread
+import requests
+import json
+import time
 
 DB_NAME:str = "cp1-2023"
 STUDENT_COLLECTION:str = "students"
@@ -18,6 +21,7 @@ SHEET_NAME_TO_ID:dict[str, int] = {
     "div2": 1,
     "div3": 2,
     "labs": 3,
+    "endsem": 4,
 }
 
 GROUP_ID:str = "uc4hHQ2lbv"
@@ -32,6 +36,23 @@ UPSOLVE_RATIO:dict[int, float] = {
     '2': 0.4,
     '3': 0.4,
 }
+
+def get_json_resp(url:str)->dict:
+    """Returns the json response of the url"""
+    wait_time:int = 5
+    while wait_time <= 2560:
+        try:
+            res = requests.get(url)
+            if res.status_code != 200:
+                time.sleep(wait_time)
+                wait_time *= 2
+            else:      
+                data = res.json()
+                return data
+        except Exception as e:
+            time.sleep(wait_time)
+            wait_time *= 2
+    raise Exception(f"Error while fetching details for {url}")
 
 class Student:
 

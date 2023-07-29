@@ -1,4 +1,4 @@
-from classes import Student, Lab_performance, GoogleSheetConnector, DB_NAME, STUDENT_COLLECTION, LAB_COLLECTION, LAB_IDS, GROUP_ID
+from classes import get_json_resp, Student, Lab_performance, GoogleSheetConnector, DB_NAME, STUDENT_COLLECTION, LAB_COLLECTION, LAB_IDS, GROUP_ID
 import pymongo
 import random
 import requests
@@ -54,12 +54,7 @@ def questions_solved(contest_id:str, cf_id:str)->set[str]:
     raw_str = f"{rand}/contest.status?apiKey={CODEFORCES_KEY}&contestId={contest_id}&groupCode={GROUP_ID}&handle={cf_id}&time={cur_time}#{CODEFORCES_SECRET}"
     hash_str = hashlib.sha512(raw_str.encode()).hexdigest()
     try:
-        res = requests.get(f"https://codeforces.com/api/contest.status?groupCode={GROUP_ID}&contestId={contest_id}&handle={cf_id}&apiKey={CODEFORCES_KEY}&time={cur_time}&apiSig={rand}{hash_str}")
-        if res.status_code != 200:
-            logging.error(msg=f"Error while fetching details for {cf_id}: {res.status_code}")
-            return set()
-        logging.debug(msg=f"Response for {cf_id}: {res.text}")
-        data = res.json()
+        data = get_json_resp(f"https://codeforces.com/api/contest.status?groupCode={GROUP_ID}&contestId={contest_id}&handle={cf_id}&apiKey={CODEFORCES_KEY}&time={cur_time}&apiSig={rand}{hash_str}")
         if data["status"] == "FAILED":
             logging.error(msg=f"Error while fetching details for {cf_id}")
             return set()
